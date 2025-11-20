@@ -1,13 +1,14 @@
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_TOKEN
 from homeassistant.core import HomeAssistant
+from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
 from .const import DOMAIN, CONF_DEVICE_ID
 from .smartthings import SmartThingsNavienClient
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
-    session = hass.helpers.aiohttp_client.async_get_clientsession()
+    session = async_get_clientsession(hass)
 
     client = SmartThingsNavienClient(
         session,
