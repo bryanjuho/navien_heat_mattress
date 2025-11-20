@@ -1,6 +1,6 @@
 """Config flow for Navien Heat Mattress integration."""
+
 import logging
-import aiohttp
 from typing import Any
 
 import voluptuous as vol
@@ -20,6 +20,7 @@ STEP_USER_DATA_SCHEMA = vol.Schema(
     }
 )
 
+
 class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     """Handle a config flow for Navien Heat Mattress."""
 
@@ -37,16 +38,16 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         if user_input is not None:
             self._token = user_input[CONF_TOKEN]
             session = async_get_clientsession(self.hass)
-            
+
             # Validate token and get devices
             try:
-                api = SmartThings(session, self._token)
-                devices = await api.devices()
-                
+                api = SmartThings(session=session, _token=self._token)
+                devices = await api.get_devices()
+
                 # Filter for Navien devices if possible, or just list all
                 # For now, we'll list all and let user choose
                 self._devices = {d.device_id: f"{d.label} ({d.name})" for d in devices}
-                
+
                 if not self._devices:
                     errors["base"] = "no_devices_found"
                 else:
@@ -67,7 +68,7 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         if user_input is not None:
             device_id = user_input[CONF_DEVICE_ID]
             device_name = self._devices[device_id]
-            
+
             await self.async_set_unique_id(device_id)
             self._abort_if_unique_id_configured()
 

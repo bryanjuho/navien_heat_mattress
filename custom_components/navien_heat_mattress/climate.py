@@ -1,12 +1,18 @@
 import logging
-from homeassistant.components.climate import ClimateEntity, ClimateEntityFeature, HVACMode
+from homeassistant.components.climate import (
+    ClimateEntity,
+    ClimateEntityFeature,
+    HVACMode,
+)
 from homeassistant.const import UnitOfTemperature
+from pysmartthings import Capability, Command, Attribute
 
 from .const import DOMAIN
 
 _LOGGER = logging.getLogger(__name__)
 
 COMPONENTS = ["Left", "Right"]
+
 
 async def async_setup_entry(hass, entry, async_add_entities):
     client = hass.data[DOMAIN][entry.entry_id]
@@ -28,6 +34,9 @@ class NavienBedClimate(ClimateEntity):
         self._current_temp = None
         self._target_temp = None
         self._hvac_mode = HVACMode.OFF
+        self._attr_min_temp = 28
+        self._attr_max_temp = 45
+        self._attr_target_temperature_step = 0.5
 
     @property
     def current_temperature(self):
@@ -48,8 +57,8 @@ class NavienBedClimate(ClimateEntity):
         try:
             await self._client.send_command(
                 self._component,
-                "thermostatHeatingSetpoint",
-                "setHeatingSetpoint",
+                Capability.THERMOSTAT_HEATING_SETPOINT,
+                Command.SET_HEATING_SETPOINT,
                 [float(temperature)],
             )
             self._target_temp = temperature
@@ -59,15 +68,15 @@ class NavienBedClimate(ClimateEntity):
 
     async def async_set_hvac_mode(self, hvac_mode: HVACMode):
         if hvac_mode == HVACMode.OFF:
-            cmd = "off"
+            cmd = Command.OFF
         else:
-            cmd = "on"
+            cmd = Command.ON
         try:
             await self._client.send_command(
                 self._component,
-                "switch",
+                Capability.SWITCH,
                 cmd,
-                [],
+                None,
             )
             self._hvac_mode = hvac_mode
             self.async_write_ha_state()
@@ -77,12 +86,27 @@ class NavienBedClimate(ClimateEntity):
     async def async_update(self):
         try:
             status = await self._client.get_status()
-            comp = status["components"][self._component]
+            comp = status[self._component]
 
-            self._current_temp = comp["temperatureMeasurement"]["temperature"]["value"]
-            self._target_temp = comp["thermostatHeatingSetpoint"]["heatingSetpoint"]["value"]
+            # Extract temperature measurement
+            temp_cap = comp.get(Capability.TEMPERATURE_MEASUREMENT, {})
+            temp_attr = temp_cap.get(Attribute.TEMPERATURE)
+            if temp_attr:
+                self._current_temp = temp_attr.value
 
-            switch_state = comp["switch"]["switch"]["value"]
-            self._hvac_mode = HVACMode.HEAT if switch_state == "on" else HVACMode.OFF
+            # Extract heating setpoint
+            setpoint_cap = comp.get(Capability.THERMOSTAT_HEATING_SETPOINT, {})
+            setpoint_attr = setpoint_cap.get(Attribute.HEATING_SETPOINT)
+            if setpoint_attr:
+                self._target_temp = setpoint_attr.value
+
+            # Extract switch state
+            switch_cap = comp.get(Capability.SWITCH, {})
+            switch_attr = switch_cap.get(Attribute.SWITCH)
+            if switch_attr:
+                switch_state = switch_attr.value
+                self._hvac_mode = (
+                    HVACMode.HEAT if switch_state == "on" else HVACMode.OFF
+                )
         except Exception as e:
             _LOGGER.error("Failed to update status: %s", e)
