@@ -1,0 +1,14 @@
+{
+    "domain": "navien_heat_mattress",
+    "name": "Navien Heat Mattress (SmartThings)",
+    "version": "0.0.1",
+    "documentation": "https://github.com/bryanjuho/navien-heatmattress-hass",
+    "requirements": [
+        "pysmartthings>=3.3.4"
+    ],
+    "codeowners": [
+        "@bryanjuho"
+    ],
+    "iot_class": "cloud_push",
+    "config_flow": true
+}
