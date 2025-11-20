@@ -1,4 +1,5 @@
 """Test script to verify the integration works before deploying to Home Assistant."""
+
 import asyncio
 import aiohttp
 import sys
@@ -8,7 +9,8 @@ import os
 sys.path.insert(0, os.path.join(os.getcwd(), "custom_components/navien_heat_mattress"))
 
 from smartthings import SmartThingsNavienClient
-from pysmartthings import Capability, Command, Attribute
+from pysmartthings import Capability, Attribute
+
 
 async def test_client():
     """Test the SmartThingsNavienClient."""
@@ -61,6 +63,7 @@ async def test_client():
         except Exception as e:
             print(f"✗ Failed to get status: {e}")
             import traceback
+
             traceback.print_exc()
             return False
 
@@ -78,6 +81,7 @@ async def test_client():
         print("All tests passed! Integration should work in Home Assistant.")
         print("=" * 60)
         return True
+
 
 async def test_climate_logic():
     """Test the climate entity logic without Home Assistant."""
@@ -120,11 +124,12 @@ async def test_climate_logic():
                 print(f"  Current: {current_temp}°C")
                 print(f"  Target: {target_temp}°C")
                 print(f"  HVAC Mode: {hvac_mode}")
-                print(f"  ✓ Climate entity data extraction successful")
+                print("  ✓ Climate entity data extraction successful")
 
             except Exception as e:
                 print(f"  ✗ Failed: {e}")
                 import traceback
+
                 traceback.print_exc()
                 return False
 
@@ -132,6 +137,7 @@ async def test_climate_logic():
     print("Climate logic tests passed!")
     print("=" * 60)
     return True
+
 
 async def main():
     """Run all tests."""
@@ -146,6 +152,7 @@ async def main():
     else:
         print("\n❌ Some tests failed. Fix issues before deploying.")
         return 1
+
 
 if __name__ == "__main__":
     exit_code = asyncio.run(main())
